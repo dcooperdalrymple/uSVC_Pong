@@ -24,24 +24,74 @@
  *  reject donations https://next-hack.com/index.php/donate/ :)
  *
  */
+
 #include "main.h"
-int main(void)
-{
-	// NOTE! The videoData structure must be correctly initialized BEFORE Calling initUsvc!
-	// Note: if audio is enabled, replace NULL with the patches array!
-	initUsvc(NULL);	  	// Init uSVC Hardware
+
+input_t input;
+playfield_t playfield;
+paddle_t player;
+paddle_t opponent;
+
+int main(void) {
+	initUsvc(NULL);	// Init uSVC Hardware
+
 	uint32_t lastTime = millis();
+	uint32_t timeNow = 0;
 	int testLed = 0;
-	while (1)   // Game main loop.
-	{
-		uint32_t timeNow = millis();
+
+	initObjects();
+	initTiles();
+
+	while (1) {
+		timeNow = millis();
+
 		waitForVerticalBlank();
-		// optional, but recommended, led blinker to show that the program is alive!
-		if (timeNow - lastTime > 1000UL)
-		{
+		removeAllSprites(0);
+
+		drawPlayfield(&playfield, 0);
+
+		animPaddle(&player, timeNow);
+		drawPaddle(player, playfield);
+		animPaddle(&opponent, timeNow);
+		drawPaddle(opponent, playfield);
+
+		drawSprites();
+
+		if (timeNow - lastTime > 1000UL) {
 			setLed(testLed);
 			testLed = 1 - testLed;
 			lastTime = timeNow;
 		}
+
+		checkInput(&input);
+
+		if (checkInputFlag(input, INPUT_UP)) {
+			movPlayfield(&playfield, 0, -1);
+		}
+		if (checkInputFlag(input, INPUT_DOWN)) {
+			movPlayfield(&playfield, 0, 1);
+		}
+		if (checkInputFlag(input, INPUT_RIGHT)) {
+			movPlayfield(&playfield, 1, 0);
+		}
+		if (checkInputFlag(input, INPUT_LEFT)) {
+			movPlayfield(&playfield, -1, 0);
+		}
+
 	}
+}
+
+void initObjects() {
+	clearInput(&input);
+	initPlayfield(&playfield);
+	initPaddle(&player, 0);
+	posPaddle(&player, 100, 100);
+	initPaddle(&opponent, 1);
+	posPaddle(&opponent, 200, 100);
+}
+
+void initTiles() {
+	memcpy(tiles, tileData, sizeof(tileData));
+	setNumberOfRamTiles(MAXTILEINDEX);
+	drawPlayfield(&playfield, 1);
 }

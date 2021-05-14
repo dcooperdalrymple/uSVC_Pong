@@ -26,6 +26,18 @@
  */
 #ifndef MAIN_H_
 #define MAIN_H_
-// We are too lazy to check which header should be put on each c file. We just put everything here, and then we include main.h
+
 #include "usvc_kernel/usvc_kernel.h"
+
+#include "tileset.h"
+#include "common.h"
+
+#include "input.h"
+#include "playfield.h"
+#include "paddle.h"
+#include "ball.h"
+
+void initObjects();
+void initTiles();
+
 #endif /* MAIN_H_ */

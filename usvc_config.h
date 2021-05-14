@@ -32,13 +32,13 @@
 // For TILE_MODE2 and TILE_MODE1 you can redefine VRAMX and VRAMY. Minimum values are VRAM = 40 and VRAMY = 25
 #if GFX_MODE == TILE_MODE2 || GFX_MODE == TILE_MODE1
 // note: if using meta tiles, vramy and vramx size should be a multiple of 2.
-	#define VRAMX 40
-	#define VRAMY 25
+	#define VRAMX 41
+	#define VRAMY 26
 	// Max number of tiles. Note that this number must include both the number of Ram Tile, and the number of temporary sprite tiles.
 	#define MAX_TILES (100)  // adjust this according to the number of tiles
 #endif
 // sprites (only for TILE_MODE1 and TILE_MODE2). Adjust everything according to your requirements
-#define SPRITES_ENABLED 0
+#define SPRITES_ENABLED 1
 #define ENABLE_TRANSPARENT_SPRITES  0	// only for TILE_MODE1. Require to include a file, which defines a variable transparentSpriteColorTable.
 #define MAX_TEMP_SPRITE_TILES 100		// Be sure to set also MAX_TILES large enough!
 #define MAX_ONSCREEN_SPRITES 16			// Number of actual sprites on screen
@@ -118,4 +118,5 @@
 	#define FORCE_INCLUDE_USB_MODULE 1			// 0: use bootloader libraries and save space
 	#define FORCE_INCLUDE_USB_KEYBOARD_MODULE 1	// 0: use bootloader libraries and save space
 #endif
+#include "VGASpritesData.h"
 #endif /* USVC_CONFIG_H_ */
