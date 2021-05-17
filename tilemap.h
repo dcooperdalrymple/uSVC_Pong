@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define MAPSIZEX_TILEMAP 48
-#define MAPSIZEY_TILEMAP 33
+#define MAPSIZEX_TILEMAP 41
+#define MAPSIZEY_TILEMAP 26
 extern const uint16_t tileMap[MAPSIZEY_TILEMAP * MAPSIZEX_TILEMAP];
 
 #endif

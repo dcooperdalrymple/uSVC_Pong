@@ -35,7 +35,7 @@
 	#define VRAMX 41
 	#define VRAMY 26
 	// Max number of tiles. Note that this number must include both the number of Ram Tile, and the number of temporary sprite tiles.
-	#define MAX_TILES (100)  // adjust this according to the number of tiles
+	#define MAX_TILES (148)  // adjust this according to the number of tiles
 #endif
 // sprites (only for TILE_MODE1 and TILE_MODE2). Adjust everything according to your requirements
 #define SPRITES_ENABLED 1
