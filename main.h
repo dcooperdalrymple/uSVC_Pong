@@ -30,6 +30,7 @@
 #include "usvc_kernel/usvc_kernel.h"
 
 #include "tileset.h"
+#include "tilemap.h"
 #include "common.h"
 
 #include "input.h"
