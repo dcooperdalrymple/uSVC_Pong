@@ -6,6 +6,7 @@ PORT	= ttyACM0
 OBJS	?= Device_Startup/startup_samd21.o \
 		   input.o \
 		   tileset.o \
+		   tilemap.o \
 		   playfield.o \
 		   paddle.o \
 		   ball.o \
@@ -22,6 +23,9 @@ OBJS	?= Device_Startup/startup_samd21.o \
 		   usvc_kernel/USB_HID_Generic_Gamepad.o \
 		   usvc_kernel/vga.o \
 		   usvc_kernel/usb_host.o
+
+IMAGE	?= ./assets/playfield.png
+
 INCS	?= -I./cmsis/samd21 \
 		   -I./cmsis/thirdparty
 XCPU 	?= -mcpu=cortex-m0plus
@@ -30,8 +34,13 @@ CFLAGS	:= -x c -mthumb -D__$(TARGETU)__ $(INCS) -O3 -ffunction-sections -mlong-c
 LFLAGS 	:= -mthumb -Wl,-Map="$(PROJECT).map" --specs=nano.specs --specs=nosys.specs -Wl,--start-group -Wl,--end-group -L"./Device_Startup" -Wl,--gc-sections $(XCPU) -T$(TARGETL)_flash.ld
 
 BOSSAC	?= ./bin/bossac
-PACKAGER ?= ./bin/packager/packager.py
+PACKAGER ?= ./bin/tools/packager.py
+TILESET ?= ./bin/tools/tileset.py
+TILEMAP ?= ./bin/tools/tilemap.py
 EDITOR	?= ./bin/editor/uChipPlayMapEditor.jar
+
+PYTHON	?= python3
+JAVA	?= java
 
 ARMGNU	?= arm-none-eabi-
 CC 		:= $(ARMGNU)gcc
@@ -44,13 +53,15 @@ all: build
 
 build: $(PROJECT).bin
 
-rebuild: clean $(PROJECT).bin
+rebuild: clean assets $(PROJECT).bin
 
 debug: CFLAGS+=-DDEBUG
 debug: clean $(PROJECT).bin bossac
 
 release: CFLAGS+=-DUSE_BOOTLOADER
 release: clean $(PROJECT).bin package
+
+assets: tilemap
 
 $(PROJECT).bin: $(OBJS)
 	$(LD) -o $(PROJECT).elf $(OBJS) $(LFLAGS)
@@ -71,11 +82,15 @@ bossac:
 	$(BOSSAC) -d -i -e -w  -o 0x2000 -R ./release/binary.bin --port=$(PORT)
 
 package:
-	python3 $(PACKAGER) -d ./release
+	$(PYTHON) $(PACKAGER) -d ./release
 	cp ./release/game.usc ./release/$(PROJECT).usc
 
+tilemap:
+	$(PYTHON) $(TILESET) -i $(IMAGE) -o ./tileset -l tileData
+	$(PYTHON) $(TILEMAP) -i $(IMAGE) -o ./tilemap -l tileMap
+
 editor:
-	java -jar $(EDITOR)
+	$(JAVA) -jar $(EDITOR)
 
 list:
 	dmesg | grep -i itaca
