@@ -87,7 +87,7 @@ class Utilities:
 
     @staticmethod
     def getImageBuffer(image, width = -1, height = -1):
-        if Palette.isCalculated == False:
+        if Palette.isCalculated() == False:
             Palette.calculate()
 
         if width < 0 or width > image.width:
@@ -132,52 +132,56 @@ class Utilities:
         return int(math.floor(image.height / float(Utilities.tileSize)))
 
     @staticmethod
-    def readImageTiles(imageBuffer, width, height):
-        tileW = int(math.floor(width / float(Utilities.tileSize)))
-        tileH = int(math.floor(height / float(Utilities.tileSize)))
+    def readImageTiles(image):
+        if Palette.isCalculated() == False:
+            Palette.calculate()
+
+        tileW = int(math.floor(image.width / float(Utilities.tileSize)))
+        tileH = int(math.floor(image.height / float(Utilities.tileSize)))
         tileLen = tileW * tileH
 
-        data = [[[0 for x in range(0, Utilities.tileSize)] for y in range(0, Utilities.tileSize)] for i in range(0, tileLen)]
+        tileData = [[[0 for x in range(0, Utilities.tileSize)] for y in range(0, Utilities.tileSize)] for i in range(0, tileLen)]
 
         for y in range(0, tileH):
             for x in range(0, tileW):
                 for i in range(0, Utilities.tileSize):
                     for j in range(0, Utilities.tileSize):
-                        data[y * tileW + x][i][j] = imageBuffer[(y * Utilities.tileSize + i) * width + (x * Utilities.tileSize + j)]
+                        tileData[y * tileW + x][i][j] = Palette.getByte(image.getpixel((x * Utilities.tileSize + j, y * Utilities.tileSize + i)))
 
-        return data
+        return tileData
 
     @staticmethod
     def equalTiles(tileA, tileB):
         for y in range(0, Utilities.tileSize):
             for x in range(0, Utilities.tileSize):
-                if tileA[y][x] != tileB[y][x]:
+                if int(tileA[y][x]) != int(tileB[y][x]):
                     return False
         return True
 
     @staticmethod
-    def extractTileset(tileData):
-        tileset = []
+    def extractTileSet(tileData):
+        tileSet = []
 
         for i in range(0, len(tileData)):
             found = False
-            for j in range(0, len(tileset)):
-                if Utilities.equalTiles(tileData[i], tileset[j]) == True:
+
+            for j in range(0, len(tileSet)):
+                if Utilities.equalTiles(tileData[i], tileSet[j]) == True:
                     found = True
                     break
 
             if found == False:
-                tileset.append(tileData[i])
+                tileSet.append(tileData[i])
 
-        return tileset
+        return tileSet
 
     @staticmethod
-    def getTilemap(tileData, tileset):
+    def getTileMap(tileData, tileSet):
         tilemap = [0 for i in range(0, len(tileData))]
 
         for i in range(0, len(tileData)):
-            for j in range(0, len(tileset)):
-                if Utilities.equalTiles(tileData[i], tileset[j]) == True:
+            for j in range(0, len(tileSet)):
+                if Utilities.equalTiles(tileData[i], tileSet[j]) == True:
                     tilemap[i] = j
                     break
 

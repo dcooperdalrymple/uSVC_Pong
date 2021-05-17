@@ -13,7 +13,6 @@ except ImportError as err:
     raise SystemExit
 
 from utilities import Utilities
-from palette import Palette
 
 # Parse command line arguments
 
@@ -38,15 +37,9 @@ if args.verbose:
     print("Image successfully loaded.")
     Utilities.printImageInfo(image)
 
-# Convert Image to uSVC VGA Palette Buffer
-Palette.calculate()
-imageW = Utilities.getImageTileW(image) * Utilities.tileSize
-imageH = Utilities.getImageTileH(image) * Utilities.tileSize
-buffer = Utilities.getImageBuffer(image, imageW, imageH)
-
 # Extract Tileset
-tileData = Utilities.readImageTiles(buffer, imageW, imageH)
-tileset = Utilities.extractTileset(tileData)
+tileData = Utilities.readImageTiles(image)
+tileset = Utilities.extractTileSet(tileData)
 
 # Process output file name
 args.outfile = path.splitext(args.outfile)[0] # Remove extension

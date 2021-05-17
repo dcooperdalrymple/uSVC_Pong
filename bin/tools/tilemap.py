@@ -14,7 +14,6 @@ except ImportError as err:
     raise SystemExit
 
 from utilities import Utilities
-from palette import Palette
 
 # Parse command line arguments
 
@@ -40,30 +39,24 @@ if args.verbose:
     print("Image successfully loaded")
     Utilities.printImageInfo(image)
 
-# Convert Image to uSVC VGA Palette Buffer
-Palette.calculate();
+# Get tiles from image
 tileW = Utilities.getImageTileW(image)
 tileH = Utilities.getImageTileH(image)
-imageW = tileW * Utilities.tileSize
-imageH = tileH * Utilities.tileSize
-buffer = Utilities.getImageBuffer(image, imageW, imageH)
-
-# Get tiles from image
-tileData = Utilities.readImageTiles(buffer, imageW, imageH)
+tileData = Utilities.readImageTiles(image)
 
 # Determine tileset
-tileset = False
+tileSet = False
 if args.tilesetfile != None:
-    tileset_image = Utilities.loadImage(args.tilesetfile)
-    tileset_w = Utilities.getImageTileW(tileset_image) * Utilities.tileSize
-    tileset_h = Utilities.getImageTileH(tileset_image) * Utilities.tileSize
-    tileset_buffer = Utilities.getImageBuffer(tileset_image, tileset_w, tileset_h)
-    tileset = Utilities.readImageTiles(tileset_buffer, tileset_w, tileset_h)
+    tileSet_image = Utilities.loadImage(args.tilesetfile)
+    tileSet_w = Utilities.getImageTileW(tileSet_image) * Utilities.tileSize
+    tileSet_h = Utilities.getImageTileH(tileSet_image) * Utilities.tileSize
+    tileSet_buffer = Utilities.getImageBuffer(tileSet_image, tileSet_w, tileSet_h)
+    tileSet = Utilities.readImageTiles(tileSet_buffer, tileSet_w, tileSet_h)
 else:
-    tileset = Utilities.extractTileset(tileData)
+    tileSet = Utilities.extractTileSet(tileData)
 
 # Identify tiles in tileset to build tilemap
-tileMap = Utilities.getTilemap(tileData, tileset)
+tileMap = Utilities.getTileMap(tileData, tileSet)
 
 # Process output file name
 args.outfile = path.splitext(args.outfile)[0] # Remove extension
