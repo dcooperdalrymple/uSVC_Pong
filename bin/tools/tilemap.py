@@ -15,88 +15,150 @@ except ImportError as err:
 
 from utilities import Utilities
 
-# Parse command line arguments
+class TileMap:
 
-parser = argparse.ArgumentParser()
+    def __init__(self):
+        self.image = False
+        self.tileW = 0
+        self.tileH = 0
+        self.tileData = False
+        self.tileSet_image = False
+        self.tileSet_data = False
+        self.tileSet = False
+        self.tileMap = False
 
-parser.add_argument("-v", "--verbose", help="display more verbose information", action="store_true")
-parser.add_argument("-l", "--label", help="variable label to use in your code", default="tileMap")
-parser.add_argument("-i", "--infile", help="location to read image file (jpg/png/bmp)")
-parser.add_argument("-o", "--outfile", help="name and location of .c and .h file (don't include file extension)", default="tilemap")
-parser.add_argument("-t", "--tilesetfile", help="location to read tileset data (jpg/png/bmp; if not specified, tileset will be extract from infile)")
+    def processImage(self, image, tileSet = False):
+        if isinstance(image, str):
+            self.image = Utilities.loadImage(image)
+        elif hasattr(image, 'width'):
+            self.image = image
 
-args = parser.parse_args()
-if args.infile == None:
-    print("No image specified.")
-    raise SystemExit
+        if self.image == False:
+            return False
 
-if args.verbose:
-    print("uSVC Tilemap Converter - Version 0.10")
+        # Get tiles from image
+        self.tileW = Utilities.getImageTileW(image)
+        self.tileH = Utilities.getImageTileH(image)
+        self.tileData = Utilities.readImageTiles(image)
 
-# Read Image
-image = Utilities.loadImage(args.infile)
-if args.verbose:
-    print("Image successfully loaded")
-    Utilities.printImageInfo(image)
+        # Determine tileset
+        if tileSet == False:
+            self.tileSet = Utilities.extractTileSet(self.tileData)
+        elif isinstance(tileSet, str):
+            self.tileSet_image = Utilities.loadImage(tileSet)
+            self.tileSet_data = Utilities.readImageTiles(self.tileSet_image)
+            self.tileSet = Utilities.extractTileSet(self.tileSet_data)
+        elif isinstance(tileSet, Image):
+            self.tileSet_image = tileSet
+            self.tileSet_data = Utilities.readImageTiles(self.tileSet_image)
+            self.tileSet = Utilities.extractTileSet(self.tileSet_data)
+        elif isinstance(tileSet, list):
+            self.tileSet = tileSet
 
-# Get tiles from image
-tileW = Utilities.getImageTileW(image)
-tileH = Utilities.getImageTileH(image)
-tileData = Utilities.readImageTiles(image)
+        if self.tileSet == False:
+            return False
 
-# Determine tileset
-tileSet = False
-if args.tilesetfile != None:
-    tileSet_image = Utilities.loadImage(args.tilesetfile)
-    tileSet_w = Utilities.getImageTileW(tileSet_image) * Utilities.tileSize
-    tileSet_h = Utilities.getImageTileH(tileSet_image) * Utilities.tileSize
-    tileSet_buffer = Utilities.getImageBuffer(tileSet_image, tileSet_w, tileSet_h)
-    tileSet = Utilities.readImageTiles(tileSet_buffer, tileSet_w, tileSet_h)
-else:
-    tileSet = Utilities.extractTileSet(tileData)
+        # Identify tiles in tileset to build tilemap
+        self.tileMap = Utilities.getTileMap(self.tileData, self.tileSet)
 
-# Identify tiles in tileset to build tilemap
-tileMap = Utilities.getTileMap(tileData, tileSet)
+        return self.tileMap
 
-# Process output file name
-args.outfile = path.splitext(args.outfile)[0] # Remove extension
-outfileName = path.basename(args.outfile) # Get name
+    def getTileMap(self):
+        return self.tileMap
 
-# Compose Header File Output
-h_output = "#ifndef {}_H_\n".format(outfileName.upper())
-h_output += "#define {}_H_\n\n".format(outfileName.upper())
-h_output +=  "#include <stdint.h>\n\n"
-h_output += "#define MAPSIZEX_{} {:d}\n".format(args.label.upper(), tileW)
-h_output += "#define MAPSIZEY_{} {:d}\n".format(args.label.upper(), tileH)
-h_output += "extern const uint16_t {}[MAPSIZEY_{} * MAPSIZEX_{}];\n\n".format(args.label, args.label.upper(), args.label.upper())
-h_output += "#endif\n"
+    def composeHeader(self, file, label):
+        # Process output file name
+        file = path.splitext(file)[0] # Remove extension
+        filename = path.basename(file) # Get name
 
-# Save Header File
-headerFile = open("{}.h".format(args.outfile), "w")
-headerFile.write(h_output)
-headerFile.close()
+        if self.tileMap == False:
+            return False
 
-# Compose C File Output
-c_output = "#include \"{}.h\"\n\n".format(outfileName)
-c_output += "const uint16_t {}[MAPSIZEY_{} * MAPSIZEX_{}] = {{\n".format(args.label, args.label.upper(), args.label.upper())
+        # Compose Header File Output
+        h_output = "#ifndef {}_H_\n".format(filename.upper())
+        h_output += "#define {}_H_\n\n".format(filename.upper())
+        h_output +=  "#include <stdint.h>\n\n"
+        h_output += "#define MAPSIZEX_{} {:d}\n".format(label.upper(), self.tileW)
+        h_output += "#define MAPSIZEY_{} {:d}\n".format(label.upper(), self.tileH)
+        h_output += "extern const uint16_t {}[MAPSIZEY_{} * MAPSIZEX_{}];\n\n".format(label, label.upper(), label.upper())
+        h_output += "#endif\n"
 
-for y in range(0, tileH):
-    c_output += " " * Utilities.outputTabLength
-    for x in range(0, tileW):
-        c_output += "0x{:04X}".format(tileMap[y * tileW + x])
-        if x < tileW - 1:
-            c_output += ", "
-    if y < tileH - 1:
-        c_output += ","
-    c_output += "\n"
-c_output += "};\n"
+        # Save Header File
+        headerFile = open("{}.h".format(file), "w")
+        headerFile.write(h_output)
+        headerFile.close()
 
-# Save C File
-codeFile = open("{}.c".format(args.outfile), "w")
-codeFile.write(c_output)
-codeFile.close()
+        return True
 
-if args.verbose:
-    print("Successfully converted image to tilemap data.")
+    def composeCode(self, file, label):
+        # Process output file name
+        file = path.splitext(file)[0] # Remove extension
+        filename = path.basename(file) # Get name
 
-raise SystemExit
+        if self.tileMap == False:
+            return False
+
+        # Compose C File Output
+        c_output = "#include \"{}.h\"\n\n".format(filename)
+        c_output += "const uint16_t {}[MAPSIZEY_{} * MAPSIZEX_{}] = {{\n".format(label, label.upper(), label.upper())
+
+        for y in range(0, self.tileH):
+            c_output += " " * Utilities.outputTabLength
+            for x in range(0, self.tileW):
+                c_output += "0x{:04X}".format(self.tileMap[y * self.tileW + x])
+                if x < self.tileW - 1:
+                    c_output += ", "
+            if y < self.tileH - 1:
+                c_output += ","
+            c_output += "\n"
+        c_output += "};\n"
+
+        # Save C File
+        codeFile = open("{}.c".format(file), "w")
+        codeFile.write(c_output)
+        codeFile.close()
+
+        return True
+
+class TileMapCLI:
+
+    def __init__(self):
+        # Parse command line arguments
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-v", "--verbose", help="display more verbose information", action="store_true")
+        parser.add_argument("-l", "--label", help="variable label to use in your code", default="tileMap")
+        parser.add_argument("-i", "--infile", help="location to read image file (jpg/png/bmp)")
+        parser.add_argument("-o", "--outfile", help="name and location of .c and .h file (don't include file extension)", default="tilemap")
+        parser.add_argument("-t", "--tilesetfile", help="location to read tileset data (jpg/png/bmp; if not specified, tileset will be extract from infile)")
+
+        self.args = parser.parse_args()
+
+        if self.args.infile == None:
+            print("No image specified.")
+            raise SystemExit
+
+        if self.args.tilesetfile == None:
+            self.args.tilesetfile = False
+
+        if self.args.verbose:
+            print("uSVC Tilemap Converter - Version 0.10")
+
+        # Read Image
+        image = Utilities.loadImage(self.args.infile)
+        if self.args.verbose:
+            print("Image successfully loaded")
+            Utilities.printImageInfo(image)
+
+        self.tileMap = TileMap()
+        self.tileMap.processImage(image, self.args.tilesetfile)
+
+        self.tileMap.composeHeader(self.args.outfile, self.args.label)
+        self.tileMap.composeCode(self.args.outfile, self.args.label)
+
+        if self.args.verbose:
+            print("Successfully converted image to tilemap data.")
+
+        raise SystemExit
+
+if __name__ == "__main__":
+    TileMapCLI()
