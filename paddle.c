@@ -12,7 +12,7 @@ void posPaddle(paddle_t *data, int16_t x, int16_t y) {
     data->y = y;
 }
 
-void movPaddle(paddle_t *data, int16_t x, int16_y y) {
+void movPaddle(paddle_t *data, int16_t x, int16_t y) {
     posPaddle(data, data->x + x, data->y + y);
 }
 
