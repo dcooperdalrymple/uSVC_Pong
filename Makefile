@@ -11,7 +11,7 @@ OBJS	?= Device_Startup/startup_samd21.o \
 		   paddle.o \
 		   ball.o \
 		   main.o \
-		   VGASpritesData.o \
+		   sprites.o \
 		   usvc_kernel/audio.o \
 		   usvc_kernel/defaultSounds.o \
 		   usvc_kernel/font8x8.o \
@@ -25,6 +25,7 @@ OBJS	?= Device_Startup/startup_samd21.o \
 		   usvc_kernel/usb_host.o
 
 IMAGE	?= ./assets/playfield.png
+SCONFIG	?= ./assets/sprites.json
 
 INCS	?= -I./cmsis/samd21 \
 		   -I./cmsis/thirdparty
@@ -37,6 +38,7 @@ BOSSAC	?= ./bin/bossac
 PACKAGER ?= ./bin/tools/packager.py
 TILESET ?= ./bin/tools/tileset.py
 TILEMAP ?= ./bin/tools/tilemap.py
+SPRITES	?= ./bin/tools/sprites.py
 EDITOR	?= ./bin/editor/uChipPlayMapEditor.jar
 
 PYTHON	?= python3
@@ -61,7 +63,7 @@ debug: clean $(PROJECT).bin bossac
 release: CFLAGS+=-DUSE_BOOTLOADER
 release: clean $(PROJECT).bin package
 
-assets: tilemap
+assets: tilemap sprites
 
 $(PROJECT).bin: $(OBJS)
 	$(LD) -o $(PROJECT).elf $(OBJS) $(LFLAGS)
@@ -88,6 +90,9 @@ package:
 tilemap:
 	$(PYTHON) $(TILESET) -i $(IMAGE) -o ./tileset -l tileData
 	$(PYTHON) $(TILEMAP) -i $(IMAGE) -o ./tilemap -l tileMap
+
+sprites:
+	$(PYTHON) $(SPRITES) -c $(SCONFIG) -o ./sprites
 
 editor:
 	$(JAVA) -jar $(EDITOR)

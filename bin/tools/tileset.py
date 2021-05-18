@@ -132,7 +132,7 @@ class TileSetCLI:
         self.tileSet.composeCode(self.args.outfile, self.args.label)
 
         if self.args.verbose:
-            print("Successfully converted image to tileset data. {:d} tiles in tileset.".format(len(tileset)))
+            print("Successfully converted image to tileset data. {:d} tiles in tileset.".format(len(self.tileSet.getTileSet())))
 
         raise SystemExit
 

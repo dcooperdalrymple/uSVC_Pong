@@ -111,6 +111,17 @@ class Utilities:
 
         return buffer
 
+    @staticmethod
+    def getImageBufferRaw(image):
+        if Palette.isCalculated() == False:
+            Palette.calculate()
+
+        buffer = [[0 for x in range(0, image.width)] for y in range(0, image.height)]
+        for y in range(0, image.height):
+            for x in range(0, image.width):
+                buffer[y][x] = Palette.getByte(image.getpixel((x, y)))
+        return buffer
+
     # Binary data in units of 4 bytes
     @staticmethod
     def calculateCheckSum(data):
