@@ -31,6 +31,7 @@ input_t input;
 playfield_t playfield;
 paddle_t player;
 paddle_t opponent;
+ball_t ball;
 
 int main(void) {
 	initUsvc(NULL);	// Init uSVC Hardware
@@ -49,11 +50,9 @@ int main(void) {
 		removeAllSprites(0);
 
 		drawPlayfield(&playfield, 0);
-
-		animPaddle(&player, timeNow);
 		drawPaddle(player, playfield);
-		animPaddle(&opponent, timeNow);
 		drawPaddle(opponent, playfield);
+		drawBall(ball, playfield);
 
 		drawSprites();
 
@@ -66,17 +65,13 @@ int main(void) {
 		checkInput(&input);
 
 		if (checkInputFlag(input, INPUT_UP)) {
-			movPlayfield(&playfield, 0, -1);
+			movPaddle(&player, 0, -1);
 		}
 		if (checkInputFlag(input, INPUT_DOWN)) {
-			movPlayfield(&playfield, 0, 1);
+			movPaddle(&player, 0, 1);
 		}
-		if (checkInputFlag(input, INPUT_RIGHT)) {
-			movPlayfield(&playfield, 1, 0);
-		}
-		if (checkInputFlag(input, INPUT_LEFT)) {
-			movPlayfield(&playfield, -1, 0);
-		}
+
+		updateBall(&ball, player, opponent);
 
 	}
 }
@@ -84,10 +79,13 @@ int main(void) {
 void initObjects() {
 	clearInput(&input);
 	initPlayfield(&playfield);
-	initPaddle(&player, 0);
-	posPaddle(&player, 100, 100);
-	initPaddle(&opponent, 1);
-	posPaddle(&opponent, 200, 100);
+	initPaddle(&player, 0, PADDLE_FRAMEINDEX);
+	posPaddle(&player, PADDLE_BOUNDS_LEFT, PADDLE_MIDDLE_Y);
+	initPaddle(&opponent, 1, PADDLE_FRAMEINDEX+1);
+	posPaddle(&opponent, PADDLE_BOUNDS_RIGHT, PADDLE_MIDDLE_Y);
+	initBall(&ball, 3);
+	posBall(&ball, BALL_START_X, BALL_START_Y);
+	velBall(&ball, -2, -4);
 }
 
 void initTiles() {

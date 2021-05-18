@@ -37,10 +37,10 @@ void checkInput(input_t *input) {
 
 void handleKey(uint8_t code, input_t *input) {
     if (code == 0) return;
-    if (code == USB_KEY_W) input->flags |= INPUT_UP_MASK;
-    if (code == USB_KEY_D) input->flags |= INPUT_RIGHT_MASK;
-    if (code == USB_KEY_S) input->flags |= INPUT_DOWN_MASK;
-    if (code == USB_KEY_A) input->flags |= INPUT_LEFT_MASK;
+    if (code == USB_KEY_W || code == USB_KEY_UP) input->flags |= INPUT_UP_MASK;
+    if (code == USB_KEY_D || code == USB_KEY_RIGHT) input->flags |= INPUT_RIGHT_MASK;
+    if (code == USB_KEY_S || code == USB_KEY_DOWN) input->flags |= INPUT_DOWN_MASK;
+    if (code == USB_KEY_A || code == USB_KEY_LEFT) input->flags |= INPUT_LEFT_MASK;
 }
 
 void handleGamepad(gamePadState_t gps, input_t *input) {
