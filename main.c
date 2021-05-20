@@ -27,11 +27,13 @@
 
 #include "main.h"
 
-input_t input;
+controls_t controls;
 playfield_t playfield;
 paddle_t player;
 paddle_t opponent;
 ball_t ball;
+uint8_t paused;
+uint8_t started;
 
 int main(void) {
 	initUsvc(NULL);	// Init uSVC Hardware
@@ -39,6 +41,13 @@ int main(void) {
 	uint32_t lastTime = millis();
 	uint32_t timeNow = 0;
 	int testLed = 0;
+	vector_t vec = { .x = 0, .y = 0 };
+	paused = 1;
+	started = 0;
+
+	#if !NO_USB
+	usbSetKeyboardInstallationCompleteCallback(seedRandom);
+	#endif
 
 	initObjects();
 	initTiles();
@@ -62,34 +71,102 @@ int main(void) {
 			lastTime = timeNow;
 		}
 
-		checkInput(&input);
+		checkInput(&controls);
 
-		if (checkInputFlag(input, INPUT_UP)) {
-			movPaddle(&player, 0, -1);
+		if (checkInputRelease(controls.player, INPUT_START) || checkInputRelease(controls.opponent, INPUT_START)) {
+			if (paused && !started) {
+				startBall();
+				started = 1;
+			}
+			paused = !paused ? 1 : 0;
 		}
-		if (checkInputFlag(input, INPUT_DOWN)) {
-			movPaddle(&player, 0, 1);
+
+		if (!paused) {
+
+			if (checkInputFlag(controls.player, INPUT_UP)) {
+				movPaddle(&player, -2 << FRACTIONAL_PART);
+			}
+			if (checkInputFlag(controls.player, INPUT_DOWN)) {
+				movPaddle(&player, 2 << FRACTIONAL_PART);
+			}
+
+			if (checkInputFlag(controls.opponent, INPUT_UP)) {
+				movPaddle(&opponent, -2 << FRACTIONAL_PART);
+			}
+			if (checkInputFlag(controls.opponent, INPUT_DOWN)) {
+				movPaddle(&opponent, 2 << FRACTIONAL_PART);
+			}
+
+			updateBall(&ball, player, opponent);
+
 		}
 
-		updateBall(&ball, player, opponent);
-
+		vec.x = ball.pos.x + ((BALL_SIZE_X / 2) << FRACTIONAL_PART);
+		vec.y = ball.pos.y + ((BALL_SIZE_Y / 2) << FRACTIONAL_PART);
+		focusPlayfield(&playfield, ball.pos);
 	}
 }
 
-void initObjects() {
-	clearInput(&input);
+void initObjects(void) {
+	clearControls(&controls);
+
 	initPlayfield(&playfield);
-	initPaddle(&player, 0, PADDLE_FRAMEINDEX);
-	posPaddle(&player, PADDLE_BOUNDS_LEFT, PADDLE_MIDDLE_Y);
-	initPaddle(&opponent, 1, PADDLE_FRAMEINDEX+1);
-	posPaddle(&opponent, PADDLE_BOUNDS_RIGHT, PADDLE_MIDDLE_Y);
+
+	initPaddle(&player, 0, PADDLE_FRAMEINDEX, (PADDLE_BOUNDS_LEFT << FRACTIONAL_PART));
+	posPaddle(&player, (PADDLE_MIDDLE_Y << FRACTIONAL_PART));
+	initPaddle(&opponent, 1, (PADDLE_FRAMEINDEX+1), (PADDLE_BOUNDS_RIGHT << FRACTIONAL_PART));
+	posPaddle(&opponent, (PADDLE_MIDDLE_Y << FRACTIONAL_PART));
+
 	initBall(&ball, 3);
-	posBall(&ball, BALL_START_X, BALL_START_Y);
-	velBall(&ball, -2, -4);
 }
 
-void initTiles() {
+void initTiles(void) {
 	memcpy(tiles, tileData, sizeof(tileData));
 	setNumberOfRamTiles(MAXTILEINDEX);
 	drawPlayfield(&playfield, 1);
+}
+
+void seedRandom(void) {
+	srand(millis());
+}
+
+void startBall(void) {
+	seedRandom();
+
+	vector_t vec = {
+		.x = BALL_START_X << FRACTIONAL_PART,
+	    .y = BALL_START_Y << FRACTIONAL_PART
+	};
+	posBall(&ball, vec);
+
+	int8_t angle = 0;
+	uint8_t random = (uint8_t)(rand() & 0x07);
+	switch (random) {
+		case 0:
+			angle = 45;
+			break;
+		case 1:
+			angle = -45;
+			break;
+		case 2:
+			angle = 30;
+			break;
+		case 3:
+			angle = -30;
+			break;
+		case 4:
+			angle = 25;
+			break;
+		case 5:
+			angle = -25;
+			break;
+		case 6:
+			angle = 15;
+			break;
+		case 7:
+			angle = -15;
+			break;
+
+	}
+	angleBall(&ball, angle, (BALL_START_SPEED << FRACTIONAL_PART));
 }

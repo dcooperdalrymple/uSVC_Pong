@@ -4,6 +4,10 @@ TARGETL	= samd21g18a
 PORT	= ttyACM0
 
 OBJS	?= Device_Startup/startup_samd21.o \
+		   atanTable.o \
+		   sinTable.o \
+		   sqrtTable.o \
+		   fastApproxMath.o \
 		   input.o \
 		   tileset.o \
 		   tilemap.o \

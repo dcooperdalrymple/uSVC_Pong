@@ -1,11 +1,11 @@
 /*
- *  USVC Template Project
- *
- *  Change/remove this copyright part when you create your own program!
+ *  RedBalls (not in the UrbanDictionary definintion!):
+ *  A clone of the popular Worms game, runnin on uChip Simple VGA Console
+ *  a simple Cortex M0+ console with 32 kB of RAM!
  *
  *  Copyright 2019-2020 Nicola Wrachien (next-hack.com)
  *
- *  This file is part of next-hack's USCV Template project.
+ *  This file is part of next-hack's RedBalls.
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
@@ -23,25 +23,14 @@
  *  Do whatever you want, this program is free! Though we won't
  *  reject donations https://next-hack.com/index.php/donate/ :)
  *
+ *
+ * atanTable.h/c: this file is (mostly) generated automatically by the uChip Game MapEditor.
  */
-#ifndef MAIN_H_
-#define MAIN_H_
+#ifndef ATANTABLE_H_
+#define ATANTABLE_H_
+#define NUMBER_OF_ATAN_ENTRIES 256
+#define ATAN_PI (0x8000UL * 4) // 0x8000 is pi/4
+#include <stdint.h>
+extern const int16_t approxAtanTable[NUMBER_OF_ATAN_ENTRIES];
 
-#include "usvc_kernel/usvc_kernel.h"
-
-#include "fastApproxMath.h"
-
-#include "tileset.h"
-#include "tilemap.h"
-#include "common.h"
-
-#include "input.h"
-#include "playfield.h"
-#include "paddle.h"
-#include "ball.h"
-
-void initObjects(void);
-void initTiles(void);
-void seedRandom(void);
-
-#endif /* MAIN_H_ */
+#endif /* ATANTABLE_H_ */

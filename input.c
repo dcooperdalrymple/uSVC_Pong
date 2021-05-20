@@ -1,10 +1,16 @@
 #include "input.h"
 
 void clearInput(input_t *input) {
+    input->prevFlags = input->flags;
     input->flags = 0;
 }
 
-void checkInput(input_t *input) {
+void clearControls(controls_t *controls) {
+    clearInput(&controls->player);
+    clearInput(&controls->opponent);
+}
+
+void checkInput(controls_t *controls) {
     do {
         if (usbHidBootKeyboardIsInstalled()) {
             usbKeyboardPoll();
@@ -15,7 +21,7 @@ void checkInput(input_t *input) {
         usbHostTask();
     } while (getCurrentScanLineNumber() < 523);
 
-    clearInput(input);
+    clearControls(controls);
 
     if (usbHidBootKeyboardIsInstalled()) {
         uint8_t modifiers = 0;
@@ -24,30 +30,40 @@ void checkInput(input_t *input) {
         usbGetCurrentKeyboardState(keyBuffer, &modifiers);
         // Modifier bits (0->7): lctrl, lshift, lalt, lwindows, rcltr, rshift, ralt, rwindows
         for (uint8_t i = 0; i < sizeof(keyBuffer); i++) {
-            handleKey(keyBuffer[i], input);
+            handleKey(keyBuffer[i], controls);
         }
     }
 
     if (usbHidGenericGamepadIsInstalled()) {
         gamePadState_t gps;
         getCurrentGamepadState(&gps);
-        handleGamepad(gps, input);
+        handleGamepad(gps, controls);
     }
 }
 
-void handleKey(uint8_t code, input_t *input) {
+void handleKey(uint8_t code, controls_t *controls) {
     if (code == 0) return;
-    if (code == USB_KEY_W || code == USB_KEY_UP) input->flags |= INPUT_UP_MASK;
-    if (code == USB_KEY_D || code == USB_KEY_RIGHT) input->flags |= INPUT_RIGHT_MASK;
-    if (code == USB_KEY_S || code == USB_KEY_DOWN) input->flags |= INPUT_DOWN_MASK;
-    if (code == USB_KEY_A || code == USB_KEY_LEFT) input->flags |= INPUT_LEFT_MASK;
+
+    // Player
+    if (code == USB_KEY_W) controls->player.flags |= INPUT_UP_MASK;
+    if (code == USB_KEY_D) controls->player.flags |= INPUT_RIGHT_MASK;
+    if (code == USB_KEY_S) controls->player.flags |= INPUT_DOWN_MASK;
+    if (code == USB_KEY_A) controls->player.flags |= INPUT_LEFT_MASK;
+    if (code == USB_KEY_SPACE) controls->player.flags |= INPUT_START_MASK;
+
+    // Opponent
+    if (code == USB_KEY_UP) controls->opponent.flags |= INPUT_UP_MASK;
+    if (code == USB_KEY_RIGHT) controls->opponent.flags |= INPUT_RIGHT_MASK;
+    if (code == USB_KEY_DOWN) controls->opponent.flags |= INPUT_DOWN_MASK;
+    if (code == USB_KEY_LEFT) controls->opponent.flags |= INPUT_LEFT_MASK;
+    if (code == USB_KEY_ENTER) controls->opponent.flags |= INPUT_START_MASK;
 }
 
-void handleGamepad(gamePadState_t gps, input_t *input) {
-    if (gps.axes[1] == gps.XYZRxMinimum) input->flags |= INPUT_UP_MASK;
-    else if (gps.axes[1] == gps.XYZRxMaximum) input->flags |= INPUT_DOWN_MASK;
-    if (gps.axes[0] == gps.XYZRxMinimum) input->flags |= INPUT_LEFT_MASK;
-    else if (gps.axes[0] == gps.XYZRxMinimum) input->flags |= INPUT_RIGHT_MASK;
+void handleGamepad(gamePadState_t gps, controls_t *controls) {
+    if (gps.axes[1] == gps.XYZRxMinimum) controls->player.flags |= INPUT_UP_MASK;
+    else if (gps.axes[1] == gps.XYZRxMaximum) controls->player.flags |= INPUT_DOWN_MASK;
+    if (gps.axes[0] == gps.XYZRxMinimum) controls->player.flags |= INPUT_LEFT_MASK;
+    else if (gps.axes[0] == gps.XYZRxMinimum) controls->player.flags |= INPUT_RIGHT_MASK;
 }
 
 uint8_t checkInputFlag(input_t input, uint8_t flag) {
@@ -55,4 +71,18 @@ uint8_t checkInputFlag(input_t input, uint8_t flag) {
 }
 uint8_t checkInputFlags(input_t input, uint8_t mask) {
     return (input.flags & mask) != 0;
+}
+
+uint8_t checkInputPrevFlag(input_t input, uint8_t flag) {
+    return (input.prevFlags & (1 << flag)) != 0;
+}
+uint8_t checkInputPrevFlags(input_t input, uint8_t mask) {
+    return (input.prevFlags & mask) != 0;
+}
+
+uint8_t checkInputPress(input_t input, uint8_t flag) {
+    return checkInputFlag(input, flag) && !checkInputPrevFlag(input, flag);
+}
+uint8_t checkInputRelease(input_t input, uint8_t flag) {
+    return !checkInputFlag(input, flag) && checkInputPrevFlag(input, flag);
 }
